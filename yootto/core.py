@@ -1,0 +1,310 @@
+import logging
+import fire
+import json
+import time
+import sys, os
+import glob
+import requests
+import datetime
+import platform
+
+from pathlib import Path
+from tqdm import tqdm
+from ytmusicapi import YTMusic
+from tinytag import TinyTag
+
+TARGET_EXT = ["*.flac", "*.m4a", "*.mp3", "*.ogg", "*.wma"]
+
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+def load_conf(conf_path):
+  dummy_conf = {
+    "auth_file_path": "headers_auth.json",
+    "online_catalog_cache_file_path": "cache.json",
+    "auto_create_playlist_format": "Upload List (%Y/%m/%d %H:%M:%S)"
+  }
+
+  if not os.path.exists(conf_path):
+    os.makedirs(os.path.dirname(conf_path))
+    try:
+      with open(conf_path, 'w') as f:
+        json.dump(dummy_conf, f)
+    except:
+      pass
+    return dummy_conf
+
+  try:
+    with open(conf_path, 'r') as f:
+      conf = json.load(f)
+  except json.JSONDecodeError as e:
+    logging.FATAL('JSONDecodeError: ', e)
+    return dummy_conf
+
+  basedir = os.path.dirname( os.path.abspath(conf_path) )
+  if not Path(conf["auth_file_path"]).is_absolute():
+    conf["auth_file_path"] = os.path.join(basedir, conf["auth_file_path"])
+  if not Path(conf["online_catalog_cache_file_path"]).is_absolute():
+    conf["online_catalog_cache_file_path"] = os.path.join(basedir, conf["online_catalog_cache_file_path"])
+    
+  return conf
+
+
+def load_online_cache(cache_path):
+  try:
+    with open(cache_path, 'r') as f:
+      cache = json.load(f)
+      return cache
+  except json.JSONDecodeError as e:
+    logging.FATAL('JSONDecodeError: ', e)
+    return []  
+
+
+def store_online_cache(cache_path, cache):
+  try:
+    with open(cache_path, 'w') as f:
+      json.dump(cache, f)
+      return "Stored cache: {f} | {cnt} songs".format(f = cache_path, cnt = len(cache))
+  except:
+    return "Error in store cache"
+
+
+def compare_online_to_file(cache, tag):
+  title = cache['title']
+  if title is None:
+    title = ''
+
+  artist = cache['artist']
+  if artist is None:
+    artist = [{ 'name': '' }]
+
+  if title == tag.title:
+    for art in artist:
+      if art['name'] == tag.artist:
+        return True
+  elif title == tag.filename:
+    return True
+
+  return False
+
+
+def get_tag_from_file(path):
+  obj = TinyTag.get(path)
+  obj.filename = os.path.basename(path)
+  return obj
+
+
+def load_playlist(playlist_path, encoding):
+  ret = []
+  try:
+    fileobj = open(playlist_path, "r", encoding=encoding)
+    while True:
+      line = fileobj.readline().replace("\n", "")
+      if line and line[0] != "#" and ord(line[0]) != 65279:
+        if not Path(line).is_absolute():
+          if platform.system() == 'Windows':
+            line = line.replace("/", "\\")
+          else:
+            line = line.replace("\\", "/")
+          basedir = os.path.dirname( os.path.abspath(playlist_path) )
+          line = os.path.join(basedir, line)
+        ret.append(get_tag_from_file(line))
+      if line:
+        pass
+      else:
+        break
+  except:
+    logging.FATAL('Playlist load error.')
+    return []
+
+  return ret
+
+  
+
+class Upload(object):
+  def __init__(self, conf = "~/.yootto/config.json"):
+    self.conf = load_conf(conf)
+
+
+  def music(self, path = "./", disable_create_playlist = False):
+    ytmusic = object()
+
+    try:
+      ytmusic = YTMusic(self.conf['auth_file_path'])
+    except expression as identifier:
+      return "Can not connect YouTube Music API: {}".format(identifier)
+    
+    abs_path = os.path.abspath(path)
+    files = []
+
+    if os.path.isdir(abs_path):
+      for ext in TARGET_EXT:
+        search_str = os.path.join("**", ext)
+        files.extend(glob.glob(os.path.join(abs_path, search_str), recursive=True))
+    else:
+      files = [abs_path]
+
+    print("{} files found".format(len(files)))
+    print("Start upload...")
+
+    success_cnt, conflict_cnt, error_cnt = 0, 0, 0
+    tags = list()
+    for f in tqdm(files):
+      try:
+        while True:
+          ret = ytmusic.upload_song(f)
+          if type(ret) is requests.models.Response and ret.status_code == 409:
+            print("Conflicted upload {}".format(f))
+            conflict_cnt += 1
+          elif type(ret) is requests.models.Response and ret.status_code == 503:
+            print("YouTube Music say 503...Susspending 15 sec...")
+            time.sleep(15)
+            continue
+          elif type(ret) is str and ret == "STATUS_SUCCEEDED":
+            tags.append(get_tag_from_file(f))
+            success_cnt += 1
+          else:
+            print("Error upload {f} / {err}".format(f = f, err = ret))
+            error_cnt += 1
+          break
+      except:
+        print("Error upload {}".format(f))
+        error_cnt += 1
+        return "success: {suc} / fail: {err}".format(suc = success_cnt, err = error_cnt)
+
+    all_len = len(tags)
+    processed_cnt = 0   
+    cache = load_online_cache(self.conf["online_catalog_cache_file_path"])
+
+    while len(tags) > processed_cnt:
+      print('waiting... ({n}/{all})'.format(n = processed_cnt, all = len(tags)))
+      time.sleep(10)
+      songs = ytmusic.get_library_upload_songs(all_len, 'recently_added')
+
+      for s in songs:
+        for t in tags:
+          if hasattr(t, 'video_id'):
+            continue
+          if not compare_online_to_file(s, t):
+            continue
+          
+          t.video_id = s['videoId']
+          cache.append(s)
+          songs.remove(s)
+          processed_cnt += 1
+
+    print(store_online_cache(self.conf["online_catalog_cache_file_path"], cache))
+    
+    if not disable_create_playlist and len(tags) != 0:
+      video_ids = list()
+      for t in tags:
+        video_ids.append(t.video_id)
+
+      title = datetime.datetime.now().strftime(self.conf["auto_create_playlist_format"])
+      res = ytmusic.create_playlist(
+        title, 
+        "Auto created by yootto",
+        "PRIVATE",
+        video_ids)
+      
+      if type(res) is str:
+        print("Playlist created: {}".format(title))
+        
+    return "success: {suc} / fail: {err}".format(suc = success_cnt, err = error_cnt)
+
+
+  def playlist(self, title, path = "./", description = "Created by yootto", encoding = "utf_8", enable_reload_online_cache = False):
+    ytmusic = object()
+
+    try:
+      ytmusic = YTMusic(self.conf['auth_file_path'])
+    except expression as identifier:
+      return "Can not connect YouTube Music API: {}".format(identifier)
+
+    cache = []
+    if enable_reload_online_cache:
+      try:
+        cache = ytmusic.get_library_upload_songs(100000)
+        print(store_online_cache(conf_data["online_catalog_cache_file_path"], cache))
+      except expression as identifier:
+        return "Error: {}".format(identifier)
+    else:
+      cache = load_online_cache(self.conf["online_catalog_cache_file_path"])
+
+    playlist = load_playlist(path, encoding)
+    if len(playlist) == 0:
+      return "Can not read playlist or playlist dose not have tracks."
+
+    print("Creating...")
+    for s in cache:
+      for p in playlist:
+        if not compare_online_to_file(s, p):
+          continue
+        p.video_id = s['videoId']
+
+    video_ids = []
+    for p in playlist:
+      if p.video_id is None:
+        return "Error: '{}' is not found in YouTube Music or local cache".format(p.filename)
+      video_ids.append(p.video_id)
+    
+    res = ytmusic.create_playlist(
+      title, 
+      description,
+      "PRIVATE",
+      video_ids)
+    if type(res) is str:
+      return "Playlist created: {}".format(title)
+      
+    return 'Failed: {}'.format(res)
+
+
+
+
+class Pipeline(object):
+  def __init__(self):
+    self.upload = Upload()
+
+
+  def auth(self, header_raw = "", conf = "~/.yootto/config.json"):
+    conf_data = load_conf(conf)
+
+    if header_raw != "":
+      YTMusic.setup(filepath = conf_data['auth_file_path'], header_raw = header_raw)
+    else:
+      print("How to get request header -> https://ytmusicapi.readthedocs.io/en/latest/setup.html#authenticated-requests")
+      YTMusic.setup(filepath = conf_data['auth_file_path'])
+
+    return '{path} is saved.'.format(path = conf_data['auth_file_path'])
+
+
+  def caching(self, conf = "~/.yootto/config.json"):
+    conf_data = load_conf(conf)
+
+    result = []
+    print("Start downloading song list...")
+
+    try:
+      ytmusic = YTMusic(conf_data['auth_file_path'])
+      result = ytmusic.get_library_upload_songs(100000)
+    except expression as identifier:
+      return "Error: {}".format(identifier)
+
+    if len(result) == 0:
+      return "Song is not found"
+    
+    return store_online_cache(conf_data["online_catalog_cache_file_path"], result)
+
+
+
+
+def main():
+  fire.Fire(Pipeline)
+
+
+
+
+if __name__ == '__main__':
+  main()

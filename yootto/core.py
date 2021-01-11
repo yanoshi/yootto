@@ -1,3 +1,7 @@
+"""
+yootto is tiny YouTube Music unofficial uploader.
+"""
+
 import logging
 import fire
 import json
@@ -27,21 +31,25 @@ def load_conf(conf_path):
     "auto_create_playlist_format": "Upload List (%Y/%m/%d %H:%M:%S)"
   }
 
-  if not os.path.exists(conf_path):
-    os.makedirs(os.path.dirname(conf_path))
+  conf = object()
+
+  if conf_path == "" or not os.path.exists(conf_path):
+    conf = dummy_conf
+    
+    conf_path = os.path.expanduser("~/.yootto/config.json")
+    os.makedirs(os.path.dirname(conf_path), exist_ok = True)
     try:
       with open(conf_path, 'w') as f:
         json.dump(dummy_conf, f)
     except:
       pass
-    return dummy_conf
-
-  try:
-    with open(conf_path, 'r') as f:
-      conf = json.load(f)
-  except json.JSONDecodeError as e:
-    logging.FATAL('JSONDecodeError: ', e)
-    return dummy_conf
+  else:
+    try:
+      with open(conf_path, 'r') as f:
+        conf = json.load(f)
+    except json.JSONDecodeError as e:
+      logging.FATAL('JSONDecodeError: ', e)
+      return dummy_conf
 
   basedir = os.path.dirname( os.path.abspath(conf_path) )
   if not Path(conf["auth_file_path"]).is_absolute():
@@ -124,11 +132,24 @@ def load_playlist(playlist_path, encoding):
   
 
 class Upload(object):
-  def __init__(self, conf = "~/.yootto/config.json"):
+  """
+  Upload audio file or playlist file.
+  """
+
+  def __init__(self, conf = ""):
+    """
+    :param conf: Config file path
+    """
     self.conf = load_conf(conf)
 
 
   def music(self, path = "./", disable_create_playlist = False):
+    """
+    Upload audio file.
+
+    :param path: A audio file path or directory path including audio files. (default value: "./")
+    :param disable_create_playlist: Disable auto create playlist function.
+    """
     ytmusic = object()
 
     try:
@@ -215,7 +236,17 @@ class Upload(object):
     return "success: {suc} / fail: {err}".format(suc = success_cnt, err = error_cnt)
 
 
-  def playlist(self, title, path = "./", description = "Created by yootto", encoding = "utf_8", enable_reload_online_cache = False):
+  def playlist(self, title, path, description = "Created by yootto", encoding = "utf_8", enable_reload_online_cache = False):
+    """
+    Upload playlist file(.m3u, .m3u8).
+
+    :param title: Playlist title
+    :param path: A playlist file path
+    :param description: Playlist description (default value: "Created by yootto")
+    :param encoding: Charactor encoding using in playlist file (default value: "utf_8")
+    :param enable_reload_online_cache: Reload songs catalog from YouTube Music.
+    """
+
     ytmusic = object()
 
     try:
@@ -268,7 +299,14 @@ class Pipeline(object):
     self.upload = Upload()
 
 
-  def auth(self, header_raw = "", conf = "~/.yootto/config.json"):
+  def auth(self, header_raw = "", conf = ""):
+    """
+    Create auth file.
+
+    :param header_raw: If you don't want interactive interface, please set this.
+    :param conf: Config file path
+    """
+
     conf_data = load_conf(conf)
 
     if header_raw != "":
@@ -280,7 +318,13 @@ class Pipeline(object):
     return '{path} is saved.'.format(path = conf_data['auth_file_path'])
 
 
-  def caching(self, conf = "~/.yootto/config.json"):
+  def caching(self, conf = ""):
+    """
+    Load songs catalog from YouTube Music.
+
+    :param conf: Config file path
+    """
+
     conf_data = load_conf(conf)
 
     result = []

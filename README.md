@@ -20,8 +20,16 @@ Using [ytmusicapi](https://github.com/sigma67/ytmusicapi). Thanks for [@sigma67]
 
 ### Install command:
 
+**In posix:**
+
 ```
-pip install git+https://github.com/yanoshi/yootto
+pip install https://github.com/yanoshi/yootto/releases/download/v0.1.1/yootto-0.1.1.tar.gz
+```
+
+**In Windows:**
+
+```
+python -m pip install https://github.com/yanoshi/yootto/releases/download/v0.1.1/yootto-0.1.1.tar.gz
 ```
 
 ### Setting auth:

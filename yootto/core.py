@@ -35,20 +35,20 @@ def load_conf(conf_path):
 
   if conf_path == "" or not os.path.exists(conf_path):
     conf = dummy_conf
-    
+
     conf_path = os.path.expanduser("~/.yootto/config.json")
     os.makedirs(os.path.dirname(conf_path), exist_ok = True)
     try:
-      with open(conf_path, 'w') as f:
+      with open(conf_path, "w") as f:
         json.dump(dummy_conf, f)
     except:
       pass
   else:
     try:
-      with open(conf_path, 'r') as f:
+      with open(conf_path, "r") as f:
         conf = json.load(f)
     except json.JSONDecodeError as e:
-      logging.FATAL('JSONDecodeError: ', e)
+      logging.FATAL("JSONDecodeError: ", e)
       return dummy_conf
 
   basedir = os.path.dirname( os.path.abspath(conf_path) )
@@ -62,17 +62,17 @@ def load_conf(conf_path):
 
 def load_online_cache(cache_path):
   try:
-    with open(cache_path, 'r') as f:
+    with open(cache_path, "r") as f:
       cache = json.load(f)
       return cache
   except json.JSONDecodeError as e:
-    logging.FATAL('JSONDecodeError: ', e)
+    logging.FATAL("JSONDecodeError: ", e)
     return []  
 
 
 def store_online_cache(cache_path, cache):
   try:
-    with open(cache_path, 'w') as f:
+    with open(cache_path, "w") as f:
       json.dump(cache, f)
       return "Stored cache: {f} | {cnt} songs".format(f = cache_path, cnt = len(cache))
   except:
@@ -80,17 +80,17 @@ def store_online_cache(cache_path, cache):
 
 
 def compare_online_to_file(cache, tag):
-  title = cache['title']
+  title = cache["title"]
   if title is None:
-    title = ''
+    title = ""
 
-  artist = cache['artist']
+  artist = cache["artist"]
   if artist is None:
-    artist = [{ 'name': '' }]
+    artist = [{ "name": "" }]
 
   if title == tag.title:
     for art in artist:
-      if art['name'] == tag.artist:
+      if art["name"] == tag.artist:
         return True
   elif title == tag.filename:
     return True
@@ -112,7 +112,7 @@ def load_playlist(playlist_path, encoding):
       line = fileobj.readline().replace("\n", "")
       if line and line[0] != "#" and ord(line[0]) != 65279:
         if not Path(line).is_absolute():
-          if platform.system() == 'Windows':
+          if platform.system() == "Windows":
             line = line.replace("/", "\\")
           else:
             line = line.replace("\\", "/")
@@ -124,7 +124,7 @@ def load_playlist(playlist_path, encoding):
       else:
         break
   except:
-    logging.FATAL('Playlist load error.')
+    logging.FATAL("Playlist load error.")
     return []
 
   return ret
@@ -153,7 +153,7 @@ class Upload(object):
     ytmusic = object()
 
     try:
-      ytmusic = YTMusic(self.conf['auth_file_path'])
+      ytmusic = YTMusic(self.conf["auth_file_path"])
     except expression as identifier:
       return "Can not connect YouTube Music API: {}".format(identifier)
     
@@ -200,18 +200,18 @@ class Upload(object):
     cache = load_online_cache(self.conf["online_catalog_cache_file_path"])
 
     while len(tags) > processed_cnt:
-      print('waiting... ({n}/{all})'.format(n = processed_cnt, all = len(tags)))
+      print("waiting... ({n}/{all})".format(n = processed_cnt, all = len(tags)))
       time.sleep(10)
-      songs = ytmusic.get_library_upload_songs(all_len, 'recently_added')
+      songs = ytmusic.get_library_upload_songs(all_len, "recently_added")
 
       for s in songs:
         for t in tags:
-          if hasattr(t, 'video_id'):
+          if hasattr(t, "video_id"):
             continue
           if not compare_online_to_file(s, t):
             continue
           
-          t.video_id = s['videoId']
+          t.video_id = s["videoId"]
           cache.append(s)
           songs.remove(s)
           processed_cnt += 1
@@ -250,7 +250,7 @@ class Upload(object):
     ytmusic = object()
 
     try:
-      ytmusic = YTMusic(self.conf['auth_file_path'])
+      ytmusic = YTMusic(self.conf["auth_file_path"])
     except expression as identifier:
       return "Can not connect YouTube Music API: {}".format(identifier)
 
@@ -273,7 +273,7 @@ class Upload(object):
       for p in playlist:
         if not compare_online_to_file(s, p):
           continue
-        p.video_id = s['videoId']
+        p.video_id = s["videoId"]
 
     video_ids = []
     for p in playlist:
@@ -289,7 +289,7 @@ class Upload(object):
     if type(res) is str:
       return "Playlist created: {}".format(title)
       
-    return 'Failed: {}'.format(res)
+    return "Failed: {}".format(res)
 
 
 
@@ -310,12 +310,12 @@ class Pipeline(object):
     conf_data = load_conf(conf)
 
     if header_raw != "":
-      YTMusic.setup(filepath = conf_data['auth_file_path'], header_raw = header_raw)
+      YTMusic.setup(filepath = conf_data["auth_file_path"], header_raw = header_raw)
     else:
       print("How to get request header -> https://ytmusicapi.readthedocs.io/en/latest/setup.html#authenticated-requests")
-      YTMusic.setup(filepath = conf_data['auth_file_path'])
+      YTMusic.setup(filepath = conf_data["auth_file_path"])
 
-    return '{path} is saved.'.format(path = conf_data['auth_file_path'])
+    return "{path} is saved.".format(path = conf_data["auth_file_path"])
 
 
   def caching(self, conf = ""):
@@ -331,7 +331,7 @@ class Pipeline(object):
     print("Start downloading song list...")
 
     try:
-      ytmusic = YTMusic(conf_data['auth_file_path'])
+      ytmusic = YTMusic(conf_data["auth_file_path"])
       result = ytmusic.get_library_upload_songs(100000)
     except expression as identifier:
       return "Error: {}".format(identifier)
@@ -350,5 +350,5 @@ def main():
 
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
   main()

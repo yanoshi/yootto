@@ -30,13 +30,13 @@ At first time, please set auth config for YouTube Music.
 
 Please see document about getting "Request headers": https://ytmusicapi.readthedocs.io/en/latest/setup.html#copy-authentication-headers
 
-**In firefox:** please run that command and paste "Request headers".
+**When using intaractive interface:** please run that command and paste "Request headers".
 
 ```
 yootto auth
 ```
 
-**In Google Chrome or Edge:** please run that command include "Request Headers".
+**When running in shell script:** please run that command include "Request Headers".
 
 ```
 yootto auth --header_raw=`cat << EOS
@@ -96,13 +96,13 @@ NOTE: You can set the config file(`config.json`) from any path using `--conf=XXX
 
 ## Usage
 
-(WIP) If you want see help, please run `yootto --help`.
+If you want see help, please run `yootto --help`.
 
 ### Upload songs
 
 **Single file:**
 
-You can set a audio file path.
+When upload a audio file, you can set file path.
 
 ```
 yootto upload music --path="hoge.mp3"
@@ -110,10 +110,17 @@ yootto upload music --path="hoge.mp3"
 
 **Multi files:**
 
-You can set a directory path include audio files.
+When upload many audio files, you can set a directory path include audio files.
 
 ```
 yootto upload music --path="/music/folder/path/"
+```
+
+There is also such an execution method.
+
+```
+cd "/music/folder/path/"
+yootto upload music
 ```
 
 NOTE: If you want disable auto generated playlist, please set `--disable_create_playlist`.

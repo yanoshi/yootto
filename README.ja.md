@@ -36,8 +36,16 @@ yoottoは「ヨーッと」って感じでサクッとYouTube Musicにアップ�
 
 下記コマンドを実行してください。
 
+**Posix環境の場合:**
+
 ```
 pip install git+https://github.com/yanoshi/yootto
+```
+
+**Windowsの場合:**
+
+```
+python -m pip install git+https://github.com/yanoshi/yootto
 ```
 
 ### 認証設定:
@@ -114,7 +122,7 @@ EOS
 
 ## 使い方
 
-下記でもわからない場合は `yootto --help` でヘルプが出れば良いな…
+下記でもわからない場合は `yootto --help` でヘルプが出るとは思いますが分かりやすいかは謎。
 
 ### 曲のアップロード
 

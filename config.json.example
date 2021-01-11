@@ -1,0 +1,5 @@
+{
+  "auth_file_path": "headers_auth.json",
+  "online_catalog_cache_file_path": "cache.json",
+  "auto_create_playlist_format": "Upload List (%Y/%m/%d %H:%M:%S)"
+}

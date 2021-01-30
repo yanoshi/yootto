@@ -4,9 +4,6 @@ yoottoは「ヨーッと」って感じでサクッとYouTube Musicにアップ�
 
 (俺得な感じで作っているので今後更新するかは分かりませんが)
 
-そのうちブログで紹介しようかとも思っていますが、とりあえず雑なドキュメントだけ。
-
-
 ## 環境
 
 - Python 3.6以上
@@ -21,14 +18,15 @@ yoottoは「ヨーッと」って感じでサクッとYouTube Musicにアップ�
 
 一応WindowsもmacOSもLinuxもサポートしているとは思います。
 
-私はWSL上で利用しています。
-
 - オーディオファイルのアップロードに対応
   - 対応フォーマット(これはYouTube Musicの仕様に基づきます): `.flac`, `.m4a`, `.mp3`, `.oga`, `.wma`
   - 自動で「そのタイミングでアップロードしたファイルをまとめたプレイリスト」的なのを作成
 - プレイリストファイルのアップロードに対応
   - 現状 `.m3u`, `.m3u8` にしか対応していません
   - プレイリストに記載されている曲は全て事前にアップロード済みである必要があります
+- プレイリストのダウンロードに対応
+  - YouTube Music上のプレイリストとローカルのファイルを突き合わせてm3u8ファイルを作ります
+  - 現状「アーティスト名」「アルバム名」「タイトル名」が完全一致しないと同一曲と判定されません
 
 ## 設定
 
@@ -39,13 +37,13 @@ yoottoは「ヨーッと」って感じでサクッとYouTube Musicにアップ�
 **Posix環境の場合:**
 
 ```
-pip install https://github.com/yanoshi/yootto/releases/download/v0.1.1/yootto-0.1.1.tar.gz
+pip install https://github.com/yanoshi/yootto/releases/download/v0.1.2/yootto-0.1.2.tar.gz
 ```
 
 **Windowsの場合:**
 
 ```
-python -m pip install https://github.com/yanoshi/yootto/releases/download/v0.1.1/yootto-0.1.1.tar.gz
+python -m pip install https://github.com/yanoshi/yootto/releases/download/v0.1.2/yootto-0.1.2.tar.gz
 ```
 
 ### 認証設定:
@@ -167,6 +165,20 @@ yootto upload playlist --path="playlist.m3u8" --title="プレイリスト名"
 
 初期設定では `utf-8` でプレイリストファイルを読み込もうとします。
 それ以外の文字コードで保存されたファイルは `--encoding=XXX` オプションを指定して読み込んでください. (ex: `--encoding="utf-16-le"`)
+
+
+### プレイリストのダウンロード
+
+プレイリストURLと、ローカルの楽曲フォルダのパス等を指定すると、YouTube Music上のプレイリストとローカルのファイルを突き合わせて、プレイリストファイル(`.m3u8`)を作ってくれます。
+
+```
+yootto download playlist --url="https://music.youtube.com/playlist?list=xxxxxxxxxxxxxxxxxxxxxxxxxxx" --music_path="/music/dir/path/" --output_path="./hogehoge.m3u8"
+```
+
+**文字コードを設定したい場合:**
+
+初期設定では `utf-8` でプレイリストファイルを書き込もうとします。
+それ以外の文字コードで保存したい場合は `--encoding=XXX` オプションを指定して読み込んでください. (ex: `--encoding="utf-16-le"`)
 
 
 ## License

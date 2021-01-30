@@ -3,7 +3,7 @@ with open('requirements.txt') as requirements_file:
     install_requirements = requirements_file.read().splitlines()
 setup(
     name="yootto",
-    version="0.1.1",
+    version="0.1.2",
     description="yootto(ヨーッと) is tiny YouTube Music unofficial uploader",
     author="yanoshi",
     author_email="",

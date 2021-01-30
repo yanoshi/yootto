@@ -8,6 +8,7 @@ Japanese document: [README.ja.md](README.ja.md)
 - Upload from local audio file (follow specifications by YouTube Music): `.flac`, `.m4a`, `.mp3`, `.oga`, `.wma`
   - When in uploaded, auto generate playlist by uploaded songs
 - Upload from local playlist file (only support `.m3u`, `.m3u8`)
+- Download playlist on YouTube Music to a m3u8 file (`artist name`, `album name` and `title` must be an exact match)
 
 
 ## Requirements
@@ -23,13 +24,13 @@ Using [ytmusicapi](https://github.com/sigma67/ytmusicapi). Thanks for [@sigma67]
 **In posix:**
 
 ```
-pip install https://github.com/yanoshi/yootto/releases/download/v0.1.1/yootto-0.1.1.tar.gz
+pip install https://github.com/yanoshi/yootto/releases/download/v0.1.2/yootto-0.1.2.tar.gz
 ```
 
 **In Windows:**
 
 ```
-python -m pip install https://github.com/yanoshi/yootto/releases/download/v0.1.1/yootto-0.1.1.tar.gz
+python -m pip install https://github.com/yanoshi/yootto/releases/download/v0.1.2/yootto-0.1.2.tar.gz
 ```
 
 ### Setting auth:
@@ -154,10 +155,17 @@ So in that case, please set `--enable_reload_online_cache`.
 
 Please use `--encoding=XXX` option. (ex: `--encoding="utf-16-le"`)
 
-### (WIP) Download playlist
+### Download playlist
 
-Not yet implemented...
+You can download playlist to a m3u8 file.
 
+```
+yootto download playlist --url="https://music.youtube.com/playlist?list=xxxxxxxxxxxxxxxxxxxxxxxxxxx" --music_path="/music/dir/path/" --output_path="./hogehoge.m3u8"
+```
+
+**When setting character encoding:**
+
+Please use `--encoding=XXX` option. (ex: `--encoding="utf-16-le"`)
 
 ## License
 

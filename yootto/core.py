@@ -11,6 +11,7 @@ import glob
 import requests
 import datetime
 import platform
+import urllib.parse
 
 from pathlib import Path
 from tqdm import tqdm
@@ -101,6 +102,7 @@ def compare_online_to_file(cache, tag):
 def get_tag_from_file(path):
   obj = TinyTag.get(path)
   obj.filename = os.path.basename(path)
+  obj.filepath = os.path.abspath(path)
   return obj
 
 
@@ -129,7 +131,21 @@ def load_playlist(playlist_path, encoding):
 
   return ret
 
+
+def get_music_file(path):
+  abs_path = os.path.abspath(path)
+  files = []
+
+  if os.path.isdir(abs_path):
+    for ext in TARGET_EXT:
+      search_str = os.path.join("**", ext)
+      files.extend(glob.glob(os.path.join(abs_path, search_str), recursive=True))
+  else:
+    files = [abs_path]
   
+  return files
+
+
 
 class Upload(object):
   """
@@ -157,15 +173,7 @@ class Upload(object):
     except expression as identifier:
       return "Can not connect YouTube Music API: {}".format(identifier)
     
-    abs_path = os.path.abspath(path)
-    files = []
-
-    if os.path.isdir(abs_path):
-      for ext in TARGET_EXT:
-        search_str = os.path.join("**", ext)
-        files.extend(glob.glob(os.path.join(abs_path, search_str), recursive=True))
-    else:
-      files = [abs_path]
+    files = get_music_file(path)
 
     print("{} files found".format(len(files)))
     print("Start upload...")
@@ -292,11 +300,105 @@ class Upload(object):
     return "Failed: {}".format(res)
 
 
+class Download(object):
+  """
+  Downalod playlist file.
+  """
 
+  def __init__(self, conf = ""):
+    """
+    :param conf: Config file path
+    """
+    self.conf = load_conf(conf)
+
+  def playlist(self, url, music_path, output_path, encoding = "utf_8"):
+    """
+    Download playlist (output to m3u8 playlist file)
+
+    :param url: Playlist url(ex: https://music.youtube.com/playlist?list=xxxxxxxxxxxxxxxxxxxxxxxxxxx)
+    :param music_path: A music folder path(ex: /music/dir/path/)
+    :param output_path: Output playlist file path(ex: hogehoge.m3u8)
+    :param encoding: Charactor encoding using in playlist file (default value: "utf_8")
+    """
+
+    ytmusic = object()
+
+    try:
+      ytmusic = YTMusic(self.conf["auth_file_path"])
+    except expression as identifier:
+      return "Can not connect YouTube Music API: {}".format(identifier)
+
+    parsed = urllib.parse.urlparse(url)
+    query = urllib.parse.parse_qs(parsed.query)
+    if "list" not in query:
+      return "Can not parse url"
+    
+    songs = ytmusic.get_playlist(query["list"][0], 2**31-1)["tracks"]
+    files = get_music_file(music_path)
+
+    print("Scan files...")
+    tags = {}
+    for f in tqdm(files):
+      try:
+        t = get_tag_from_file(f)
+
+        artist = "-"
+        if t.artist != "":
+          artist = t.artist
+
+        album = "-"
+        if t.album != "":
+          album = t.album
+
+        title = t.filename
+        if t.title != "":
+          title = t.title
+
+        if artist not in tags:
+          tags[artist] = {}
+        if album not in tags[artist]:
+          tags[artist][album] = {}
+        
+        if title in tags[artist][album] and tags[artist][album][title].duration > t.duration:
+          continue
+
+        tags[artist][album][title] = t
+
+      except:
+        print("Error get music tag: {}".format(f))
+
+    print("Write playlist...")
+    try:
+      fstr = open(output_path, 'w', encoding=encoding)
+      
+      for s in tqdm(songs):
+        artist = "-"
+        if "artists" in s or len(s["artists"]) > 0:
+          artist = s["artists"][0]["name"]
+        
+        album = "-"
+        if "album" in s:
+          album = s["album"]["name"]
+        
+        title = "-"
+        if "title" in s:
+          title = s["title"]
+
+        if artist in tags and album in tags[artist] and title in tags[artist][album]:
+          fstr.write(tags[artist][album][title].filepath + "\n")
+        else:
+          print("Cannot find: {at} / {al} / {tl}".format(at=artist, al=album, tl=title))
+      
+      fstr.close()
+    except:
+      return "Cannot write playlist file..."
+        
+    return "Success: {}".format(output_path)
 
 class Pipeline(object):
   def __init__(self):
     self.upload = Upload()
+    self.download = Download()
 
 
   def auth(self, header_raw = "", conf = ""):

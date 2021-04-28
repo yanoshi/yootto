@@ -1,4 +1,4 @@
-ytmusicapi==0.12.2
+ytmusicapi==0.16.0
 fire==0.3.1
 tinytag==1.5.0
 tqdm==4.55.2

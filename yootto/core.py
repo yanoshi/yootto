@@ -285,7 +285,7 @@ class Upload(object):
 
     video_ids = []
     for p in playlist:
-      if p.video_id is None:
+      if not hasattr(p, 'video_id') or p.video_id is None:
         return "Error: '{}' is not found in YouTube Music or local cache".format(p.filename)
       video_ids.append(p.video_id)
     

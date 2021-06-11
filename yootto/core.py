@@ -170,7 +170,7 @@ class Upload(object):
 
     try:
       ytmusic = YTMusic(self.conf["auth_file_path"])
-    except expression as identifier:
+    except Exception as identifier:
       return "Can not connect YouTube Music API: {}".format(identifier)
     
     files = get_music_file(path)
@@ -259,7 +259,7 @@ class Upload(object):
 
     try:
       ytmusic = YTMusic(self.conf["auth_file_path"])
-    except expression as identifier:
+    except Exception as identifier:
       return "Can not connect YouTube Music API: {}".format(identifier)
 
     cache = []
@@ -267,7 +267,7 @@ class Upload(object):
       try:
         cache = ytmusic.get_library_upload_songs(100000)
         print(store_online_cache(conf_data["online_catalog_cache_file_path"], cache))
-      except expression as identifier:
+      except Exception as identifier:
         return "Error: {}".format(identifier)
     else:
       cache = load_online_cache(self.conf["online_catalog_cache_file_path"])
@@ -325,7 +325,7 @@ class Download(object):
 
     try:
       ytmusic = YTMusic(self.conf["auth_file_path"])
-    except expression as identifier:
+    except Exception as identifier:
       return "Can not connect YouTube Music API: {}".format(identifier)
 
     parsed = urllib.parse.urlparse(url)
@@ -435,7 +435,7 @@ class Pipeline(object):
     try:
       ytmusic = YTMusic(conf_data["auth_file_path"])
       result = ytmusic.get_library_upload_songs(100000)
-    except expression as identifier:
+    except Exception as identifier:
       return "Error: {}".format(identifier)
 
     if len(result) == 0:

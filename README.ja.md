@@ -37,13 +37,13 @@ yoottoは「ヨーッと」って感じでサクッとYouTube Musicにアップ�
 **Posix環境の場合:**
 
 ```
-pip install https://github.com/yanoshi/yootto/releases/download/v0.1.3/yootto-0.1.3.tar.gz
+pip install https://github.com/yanoshi/yootto/releases/download/v0.1.4/yootto-0.1.4.tar.gz
 ```
 
 **Windowsの場合:**
 
 ```
-python -m pip install https://github.com/yanoshi/yootto/releases/download/v0.1.3/yootto-0.1.3.tar.gz
+python -m pip install https://github.com/yanoshi/yootto/releases/download/v0.1.4/yootto-0.1.4.tar.gz
 ```
 
 ### 認証設定:

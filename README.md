@@ -24,13 +24,13 @@ Using [ytmusicapi](https://github.com/sigma67/ytmusicapi). Thanks for [@sigma67]
 **In posix:**
 
 ```
-pip install https://github.com/yanoshi/yootto/releases/download/v0.1.4/yootto-0.1.4.tar.gz
+pip install https://github.com/yanoshi/yootto/releases/download/v0.1.5/yootto-0.1.5.tar.gz
 ```
 
 **In Windows:**
 
 ```
-python -m pip install https://github.com/yanoshi/yootto/releases/download/v0.1.4/yootto-0.1.4.tar.gz
+python -m pip install https://github.com/yanoshi/yootto/releases/download/v0.1.5/yootto-0.1.5.tar.gz
 ```
 
 ### Setting auth:
@@ -39,7 +39,7 @@ At first time, please set auth config for YouTube Music.
 
 Please see document about getting "Request headers": https://ytmusicapi.readthedocs.io/en/latest/setup.html#copy-authentication-headers
 
-**When using intaractive interface:** please run that command and paste "Request headers".
+**When using intaractive interface:** please run that command and paste "Request headers" and press "Enter, Ctrl-Z, Enter".
 
 ```
 yootto auth
@@ -102,6 +102,15 @@ Example:
 
 NOTE: You can set the config file(`config.json`) from any path using `--conf=XXX` command line option.
 
+### Load songs cache:
+
+If you want to manage your uploaded songs outside of yootto, please build a cache.
+
+```
+yootto caching
+```
+
+Note: This process will take some time. And if YouTube Music is not working properly, it may not come back from processing. In that case, abort the process and try again.
 
 ## Usage
 

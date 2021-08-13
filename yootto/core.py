@@ -393,15 +393,15 @@ class Download(object):
       
       for s in tqdm(songs):
         artist = "-"
-        if "artists" in s or len(s["artists"]) > 0:
+        if "artists" in s and len(s["artists"]) > 0:
           artist = s["artists"][0]["name"]
         
         album = "-"
-        if "album" in s:
+        if "album" in s and s["album"] != None:
           album = s["album"]["name"]
         
         title = "-"
-        if "title" in s:
+        if "title" in s and s["title"] != None:
           title = s["title"]
 
         if artist in tags and album in tags[artist] and title in tags[artist][album]:

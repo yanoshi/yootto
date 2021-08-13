@@ -62,12 +62,14 @@ def load_conf(conf_path):
 
 
 def load_online_cache(cache_path):
+  if not os.path.exists(cache_path):
+    return []
   try:
     with open(cache_path, "r") as f:
       cache = json.load(f)
       return cache
   except json.JSONDecodeError as e:
-    logging.FATAL("JSONDecodeError: ", e)
+    logging.warning("JSONDecodeError: %s", e)
     return []  
 
 
@@ -204,13 +206,15 @@ class Upload(object):
         return "success: {suc} / fail: {err}".format(suc = success_cnt, err = error_cnt)
 
     all_len = len(tags)
-    processed_cnt = 0   
+    processed_cnt = 0
+    retry_cnt = 0
     cache = load_online_cache(self.conf["online_catalog_cache_file_path"])
 
     while len(tags) > processed_cnt:
       print("waiting... ({n}/{all})".format(n = processed_cnt, all = len(tags)))
       time.sleep(10)
       songs = ytmusic.get_library_upload_songs(all_len, "recently_added")
+      last_cnt = processed_cnt
 
       for s in songs:
         for t in tags:
@@ -220,26 +224,41 @@ class Upload(object):
             continue
           
           t.video_id = s["videoId"]
-          cache.append(s)
-          songs.remove(s)
+          try:
+            cache.append(s)
+            songs.remove(s)
+          except Exception as identifier:
+            logger.error("Upload error: %s", identifier)
+            logger.error("Failed proccesing song: %s", s)
           processed_cnt += 1
+      
+      if last_cnt == processed_cnt:
+        retry_cnt += 1
+      else:
+        retry_cnt = 0
+
+      if retry_cnt > 30:
+        logger.error("Can not get meta data. Unprocessed data: %s", songs)
+        break
 
     print(store_online_cache(self.conf["online_catalog_cache_file_path"], cache))
     
     if not disable_create_playlist and len(tags) != 0:
       video_ids = list()
       for t in tags:
-        video_ids.append(t.video_id)
+        if hasattr(t, "video_id"):
+          video_ids.append(t.video_id)
 
-      title = datetime.datetime.now().strftime(self.conf["auto_create_playlist_format"])
-      res = ytmusic.create_playlist(
-        title, 
-        "Auto created by yootto",
-        "PRIVATE",
-        video_ids)
-      
-      if type(res) is str:
-        print("Playlist created: {}".format(title))
+      if len(video_ids) > 0:
+        title = datetime.datetime.now().strftime(self.conf["auto_create_playlist_format"])
+        res = ytmusic.create_playlist(
+          title, 
+          "Auto created by yootto",
+          "PRIVATE",
+          video_ids)
+        
+        if type(res) is str:
+          print("Playlist created: {}".format(title))
         
     return "success: {suc} / fail: {err}".format(suc = success_cnt, err = error_cnt)
 
@@ -266,7 +285,7 @@ class Upload(object):
     if enable_reload_online_cache:
       try:
         cache = ytmusic.get_library_upload_songs(100000)
-        print(store_online_cache(conf_data["online_catalog_cache_file_path"], cache))
+        print(store_online_cache(self.conf["online_catalog_cache_file_path"], cache))
       except Exception as identifier:
         return "Error: {}".format(identifier)
     else:
@@ -286,7 +305,7 @@ class Upload(object):
     video_ids = []
     for p in playlist:
       if not hasattr(p, 'video_id') or p.video_id is None:
-        return "Error: '{}' is not found in YouTube Music or local cache".format(p.filename)
+        print("Error: '{}' is not found in YouTube Music or local cache".format(p.filename))
       video_ids.append(p.video_id)
     
     res = ytmusic.create_playlist(

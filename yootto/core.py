@@ -306,6 +306,7 @@ class Upload(object):
     for p in playlist:
       if not hasattr(p, 'video_id') or p.video_id is None:
         print("Error: '{}' is not found in YouTube Music or local cache".format(p.filename))
+        continue
       video_ids.append(p.video_id)
     
     res = ytmusic.create_playlist(

@@ -200,8 +200,8 @@ class Upload(object):
             print("Error upload {f} / {err}".format(f = f, err = ret))
             error_cnt += 1
           break
-      except:
-        print("Error upload {}".format(f))
+      except Exception as e:
+        print("Error upload {}: {}".format(f, e))
         error_cnt += 1
         return "success: {suc} / fail: {err}".format(suc = success_cnt, err = error_cnt)
 

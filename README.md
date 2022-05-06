@@ -24,13 +24,13 @@ Using [ytmusicapi](https://github.com/sigma67/ytmusicapi). Thanks for [@sigma67]
 **In posix:**
 
 ```
-pip install https://github.com/yanoshi/yootto/releases/download/v0.1.5/yootto-0.1.5.tar.gz
+pip install https://github.com/yanoshi/yootto/releases/download/v0.1.6/yootto-0.1.6.tar.gz
 ```
 
 **In Windows:**
 
 ```
-python -m pip install https://github.com/yanoshi/yootto/releases/download/v0.1.5/yootto-0.1.5.tar.gz
+python -m pip install https://github.com/yanoshi/yootto/releases/download/v0.1.6/yootto-0.1.6.tar.gz
 ```
 
 ### Setting auth:

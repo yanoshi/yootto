@@ -29,7 +29,8 @@ def load_conf(conf_path):
   dummy_conf = {
     "auth_file_path": "headers_auth.json",
     "online_catalog_cache_file_path": "cache.json",
-    "auto_create_playlist_format": "Upload List (%Y/%m/%d %H:%M:%S)"
+    "auto_create_playlist_format": "Upload List (%Y/%m/%d %H:%M:%S)",
+    "online_catalog_music_list_path": "music_list.txt"
   }
 
   conf = object()
@@ -57,7 +58,8 @@ def load_conf(conf_path):
     conf["auth_file_path"] = os.path.join(basedir, conf["auth_file_path"])
   if not Path(conf["online_catalog_cache_file_path"]).is_absolute():
     conf["online_catalog_cache_file_path"] = os.path.join(basedir, conf["online_catalog_cache_file_path"])
-    
+  if not Path(conf["online_catalog_music_list_path"]).is_absolute():
+    conf["online_catalog_music_list_path"] = os.path.join(basedir, conf["online_catalog_music_list_path"])
   return conf
 
 
@@ -73,10 +75,13 @@ def load_online_cache(cache_path):
     return []  
 
 
-def store_online_cache(cache_path, cache):
+def store_online_cache(cache_path, cache, music_list_path):
   try:
     with open(cache_path, "w") as f:
       json.dump(cache, f)
+      with open(music_list_path, "w", encoding='UTF-8', newline='\n') as list_f:
+        for s in cache:
+            list_f.write(s["title"] + '\n')
       return "Stored cache: {f} | {cnt} songs".format(f = cache_path, cnt = len(cache))
   except:
     return "Error in store cache"
@@ -84,6 +89,7 @@ def store_online_cache(cache_path, cache):
 
 def compare_online_to_file(cache, tag):
   title = cache["title"]
+
   if title is None:
     title = ""
 
@@ -461,7 +467,7 @@ class Pipeline(object):
     if len(result) == 0:
       return "Song is not found"
     
-    return store_online_cache(conf_data["online_catalog_cache_file_path"], result)
+    return store_online_cache(conf_data["online_catalog_cache_file_path"], result, conf_data["online_catalog_music_list_path"])
 
 
 

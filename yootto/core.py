@@ -87,7 +87,7 @@ def compare_online_to_file(cache, tag):
   if title is None:
     title = ""
 
-  artist = cache["artist"]
+  artist = cache["artists"]
   if artist is None:
     artist = [{ "name": "" }]
 

@@ -12,6 +12,7 @@ import requests
 import datetime
 import platform
 import urllib.parse
+import functools
 
 from pathlib import Path
 from tqdm import tqdm
@@ -171,7 +172,9 @@ class Upload(object):
     ytmusic = object()
 
     try:
-      ytmusic = YTMusic(self.conf["auth_file_path"])
+      s = requests.Session()
+      s.request = functools.partial(s.request, timeout=120)
+      ytmusic = YTMusic(self.conf["auth_file_path"], requests_session=s)
     except Exception as identifier:
       return "Can not connect YouTube Music API: {}".format(identifier)
     
@@ -453,7 +456,9 @@ class Pipeline(object):
     print("Start downloading song list...")
 
     try:
-      ytmusic = YTMusic(conf_data["auth_file_path"])
+      s = requests.Session()
+      s.request = functools.partial(s.request, timeout=7200)
+      ytmusic = YTMusic(auth=conf_data["auth_file_path"], requests_session=s)
       result = ytmusic.get_library_upload_songs(100000)
     except Exception as identifier:
       return "Error: {}".format(identifier)
